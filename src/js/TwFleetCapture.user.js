@@ -3,7 +3,7 @@
 // @name:ja         フリートキャプチャー
 // @namespace       https://furyutei.work
 // @license         MIT
-// @version         0.1.1
+// @version         0.1.2
 // @description     Save Twitter Fleet Images/Videos
 // @description:ja  Twitterのフリート画像／動画を保存
 // @author          furyu
@@ -267,9 +267,32 @@ const
         
         if ( event ) {
             if ( event.altKey ) {
-                fleetline_info.hydrated_threads.map( hydrated_thread => {
-                    hydrated_thread.fleets.map( open_fleet_media_files );
-                } );
+                /*
+                //fleetline_info.hydrated_threads.map( hydrated_thread => {
+                //    hydrated_thread.fleets.map( open_fleet_media_files );
+                //} );
+                */
+                for ( let thread of fleetline_info.threads ) {
+                    let user_id = thread.user_id_str;
+                    /*
+                    //let user_fleet_info = fleetline_info.hydrated_threads.filter( hydrated_thread => hydrated_thread.user_id_str == user_id ).map( hydrated_thread => {
+                    //        return { fleet_threads : [ hydrated_thread ] };
+                    //    } )[ 0 ];
+                    //
+                    //if ( ! user_fleet_info ) {
+                    //    user_fleet_info = await fetch_user_fleet( user_id );
+                    //}
+                    */
+                    let user_fleet_info = await fetch_user_fleet( user_id );
+                    
+                    if ( user_fleet_info.error ) {
+                        continue;
+                    }
+                    
+                    let fleet_info_list = ( ( user_fleet_info.fleet_threads || [] )[ 0 ] || {} ).fleets || [];
+                    
+                    fleet_info_list.map( open_fleet_media_files );
+                }
                 return;
             }
             
@@ -303,13 +326,17 @@ const
                 continue;
             }
             
-            let user_fleet_info = fleetline_info.hydrated_threads.filter( hydrated_thread => hydrated_thread.user_id_str == user_id ).map( hydrated_thread => {
-                    return { fleet_threads : [ hydrated_thread ] };
-                } )[ 0 ];
-
-            if ( ! user_fleet_info ) {
-                user_fleet_info = await fetch_user_fleet( user_id );
-            }
+            /*
+            //let user_fleet_info = fleetline_info.hydrated_threads.filter( hydrated_thread => hydrated_thread.user_id_str == user_id ).map( hydrated_thread => {
+            //        return { fleet_threads : [ hydrated_thread ] };
+            //    } )[ 0 ];
+            //
+            //if ( ! user_fleet_info ) {
+            //    user_fleet_info = await fetch_user_fleet( user_id );
+            //}
+            */
+            
+            let user_fleet_info = await fetch_user_fleet( user_id );
             
             if ( user_fleet_info.error ) {
                 continue;

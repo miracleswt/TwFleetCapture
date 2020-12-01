@@ -12,7 +12,7 @@
 ---
 [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja)を入れたGoogle Chrome、もしくは、[Tampermonkey](https://addons.mozilla.org/ja/firefox/addon/tampermonkey/)を入れたFirefoxにて、  
 
-> [TwFleetCapture.user.js](https://github.com/furyutei/TwFleetCapture/raw/master/src/js/TwFleetCapture.user.js)  
+> [TwFleetCapture.user.js](https://github.com/furyutei/TwFleetCapture/raw/main/src/js/TwFleetCapture.user.js)
 
 をクリックし、指示に従ってインストール。  
 

@@ -1,4 +1,4 @@
-[TwitterのFleet画像／動画をダウンロード](https://github.com/furyutei/TwFleetCapture)
+[フリートキャプチャー(TwFleetCapture) - TwitterのFleet画像／動画をダウンロード](https://github.com/furyutei/TwFleetCapture)
 ===
 
 - License: The MIT license  

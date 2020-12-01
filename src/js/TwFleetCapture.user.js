@@ -3,7 +3,7 @@
 // @name:ja         フリートキャプチャー
 // @namespace       https://furyutei.work
 // @license         MIT
-// @version         0.1.0
+// @version         0.1.1
 // @description     Save Twitter Fleet Images/Videos
 // @description:ja  Twitterのフリート画像／動画を保存
 // @author          furyu
@@ -224,6 +224,27 @@ const
         return fleet_info_list.length;
     },
     
+    open_fleet_media_files = fleet_info => {
+        let media_entity = fleet_info.media_entity,
+            media_info = media_entity.media_info;
+        
+        if ( media_info.video_info ) {
+            let max_size_variant = media_info.video_info.variants.reduce( ( max_size_variant, variant ) => {
+                    if ( variant.content_type != 'video/mp4' ) {
+                        return max_size_variant;
+                    }
+                    return ( max_size_variant.bit_rate < variant.bit_rate ) ? variant : max_size_variant;
+                }, { bit_rate : 0 } );
+            
+            window.open( max_size_variant.url );
+            return;
+        }
+        
+        let image_url = media_entity.media_url_https.replace( /\.([^.]+)$/, '?format=$1&name=orig' );
+        
+        window.open( image_url );
+    },
+    
     download_blob = ( filename, blob ) => {
         let blob_url = URL.createObjectURL( blob ),
             download_button = document.createElement( 'a' );
@@ -235,12 +256,40 @@ const
         download_button.remove();
     },
     
-    download_followee_fleets = async () => {
-        let fleetline_info = await fetch_fleetline();
+    download_followee_fleets = async ( params ) => {
+        let { event } = params,
+            fleetline_info = await fetch_fleetline();
         
         if ( ( fleetline_info.error ) || ( ! fleetline_info.threads ) ) {
             alert( 'Failed to get fleet information: ' + fleetline_info.error );
             return;
+        }
+        
+        if ( event ) {
+            if ( event.altKey ) {
+                fleetline_info.hydrated_threads.map( hydrated_thread => {
+                    hydrated_thread.fleets.map( open_fleet_media_files );
+                } );
+                return;
+            }
+            
+            if ( event.shiftKey ) {
+                let user_info_list = await Promise.all(
+                        fleetline_info.threads.map( async thread => {
+                            let user_id = thread.user_id_str,
+                                user_info = await fetch_user_info( null, user_id );
+                            
+                            return user_info;
+                        } )
+                    );
+                
+                user_info_list.map( user_info => {
+                    if ( ! user_info.error ) {
+                        window.open( new URL( '/' + user_info.screen_name, location.href ).href );
+                    }
+                } );
+                return;
+            }
         }
         
         let zip = new JSZip(),
@@ -254,7 +303,13 @@ const
                 continue;
             }
             
-            let user_fleet_info = await fetch_user_fleet( user_id );
+            let user_fleet_info = fleetline_info.hydrated_threads.filter( hydrated_thread => hydrated_thread.user_id_str == user_id ).map( hydrated_thread => {
+                    return { fleet_threads : [ hydrated_thread ] };
+                } )[ 0 ];
+
+            if ( ! user_fleet_info ) {
+                user_fleet_info = await fetch_user_fleet( user_id );
+            }
             
             if ( user_fleet_info.error ) {
                 continue;
@@ -281,12 +336,20 @@ const
         download_blob( zip_filename, zip_blob );
     },
     
-    download_user_fleets = async ( user_info ) => {
-        let user_id = user_info.error ? null : user_info.id_str,
+    download_user_fleets = async ( params ) => {
+        let { event, user_info } = params,
+            user_id = user_info.error ? null : user_info.id_str,
             user_fleet_info = user_id ? await fetch_user_fleet( user_id ) : { error : 'User not found' };
         
         if ( user_fleet_info.error ) {
             alert( 'Failed to get fleet information: ' + user_fleet_info.error );
+            return;
+        }
+        
+        if ( event.altKey ) {
+            let fleet_info_list = ( ( user_fleet_info.fleet_threads || [] )[ 0 ] || {} ).fleets || [];
+            
+            fleet_info_list.map( open_fleet_media_files );
             return;
         }
         
@@ -324,14 +387,19 @@ const
         capture_container = document.createElement( 'button' );
         capture_container.id = HOME_CAPTURE_CONTAINER_ID;
         capture_container.textContent = 'Fleets 💾';
-        capture_container.title = 'Download Fleets of Followees';
+        capture_container.title = 'Download Fleet images of Followees / [Alt] Open Fleet images/ [Shift] Open timelines';
         
         capture_container.addEventListener( 'click', ( event ) => {
+            event.stopPropagation();
+            event.preventDefault();
+            
             capture_container.classList.add( 'loading' );
             capture_container.disabled = true;
             
             ( async () => {
-                await download_followee_fleets();
+                await download_followee_fleets( {
+                    event,
+                } );
                 capture_container.disabled = false;
                 capture_container.classList.remove( 'loading' );
             } )();
@@ -369,14 +437,20 @@ const
         capture_container.id = USER_CAPTURE_CONTAINER_ID;
         capture_container.dataset.screen_name = screen_name;
         capture_container.textContent = 'Fleets 💾';
-        capture_container.title = 'Download Fleets of this User';
+        capture_container.title = 'Download Fleet images of this user / [Alt] Open Fleet images';
         
         capture_container.addEventListener( 'click', ( event ) => {
+            event.stopPropagation();
+            event.preventDefault();
+            
             capture_container.classList.add( 'loading' );
             capture_container.disabled = true;
             
             ( async () => {
-                await download_user_fleets( user_info );
+                await download_user_fleets( {
+                    event,
+                    user_info,
+                } );
                 capture_container.disabled = false;
                 capture_container.classList.remove( 'loading' );
             } )();

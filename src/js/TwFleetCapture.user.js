@@ -3,12 +3,13 @@
 // @name:ja         フリートキャプチャー
 // @namespace       https://furyutei.work
 // @license         MIT
-// @version         0.1.2
+// @version         0.1.3
 // @description     Save Twitter Fleet Images/Videos
 // @description:ja  Twitterのフリート画像／動画を保存
 // @author          furyu
 // @match           https://twitter.com/*
 // @require         https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js
+// @noframes
 // @grant           none
 // @compatible      chrome
 // @compatible      firefox
